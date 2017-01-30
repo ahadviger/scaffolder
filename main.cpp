@@ -37,8 +37,8 @@ struct overlap {
 
 	void print() {
 		cout << read_id << ' ' << read_length << ' ' << read_start << ' ' << read_end << " | " 
-		<< contig_id << ' ' << contig_length << ' ' << contig_start << ' ' << contig_end << " | "
-		<< num_matches << ' ' << match_length << ' ' << strand << endl;
+			<< contig_id << ' ' << contig_length << ' ' << contig_start << ' ' << contig_end << " | "
+			<< num_matches << ' ' << match_length << ' ' << strand << endl;
 	}
 };
 
@@ -46,7 +46,6 @@ vector<overlap> overlaps;
 std::map<pair<string, string>, int> votes_end_start, votes_end_end, votes_start_start;
 
 struct joint_overlap {
-	
 	string left, right;
 	int votes, type;
 
@@ -55,6 +54,7 @@ struct joint_overlap {
 	joint_overlap(string _left, string _right, int _type) {
 		left = _left; right = _right;
 		type = _type;
+
 		if (type == 0) votes = votes_end_start[std::make_pair(left, right)];
 		else if (type == 1) votes = votes_end_end[std::make_pair(left, right)];
 		else if (type == 2) votes = votes_start_start[std::make_pair(left, right)];
@@ -75,7 +75,6 @@ unordered_map<string, Scaffold*> id_to_scaffold;
 
 
 bool check_overlaps_end_start(overlap left, overlap right) {
-
 	if (left.contig_id == right.contig_id) return false;
 	if (left.strand != right.strand) return false;
 
@@ -99,7 +98,6 @@ bool check_overlaps_end_start(overlap left, overlap right) {
 }
 
 bool check_overlaps_end_end(overlap left, overlap right) {
-
 	if (left.contig_id == right.contig_id) return false;
 	if (left.strand == right.strand) return false;
 
@@ -111,8 +109,10 @@ bool check_overlaps_end_end(overlap left, overlap right) {
 	if ((double) left.contig_end / left.contig_length < 1 - CONTIG_THRESHOLD) return false;
 	if ((double) right.contig_end / right.contig_length < 1 - CONTIG_THRESHOLD) return false;
 
-	if (!((double) left.read_start / left.read_length <= READ_THRESHOLD && (double) right.read_end / right.read_length > 1 - READ_THRESHOLD ||
-		 (double) right.read_start / right.read_length <= READ_THRESHOLD && (double) left.read_end / left.read_length > 1 - READ_THRESHOLD)) return false;
+	if (!((double) left.read_start / left.read_length <= READ_THRESHOLD && 
+		(double) right.read_end / right.read_length > 1 - READ_THRESHOLD ||
+		(double) right.read_start / right.read_length <= READ_THRESHOLD && 
+		(double) left.read_end / left.read_length > 1 - READ_THRESHOLD)) return false;
 	
 	if ((double) (left.match_length + right.match_length) / left.read_length < MATCH_THRESHOLD) return false;
 
@@ -120,7 +120,6 @@ bool check_overlaps_end_end(overlap left, overlap right) {
 }
 
 bool check_overlaps_start_start(overlap left, overlap right) {
-
 	if (left.contig_id == right.contig_id) return false;
 	if (left.strand == right.strand) return false;
 
@@ -132,21 +131,21 @@ bool check_overlaps_start_start(overlap left, overlap right) {
 	if ((double) left.contig_start / left.contig_length > CONTIG_THRESHOLD) return false;
 	if ((double) right.contig_start / right.contig_length > CONTIG_THRESHOLD) return false;
 
-	if (!((double) left.read_start / left.read_length <= READ_THRESHOLD && (double) right.read_end / right.read_length > 1 - READ_THRESHOLD ||
-		 (double) right.read_start / right.read_length <= READ_THRESHOLD && (double) left.read_end / left.read_length > 1 - READ_THRESHOLD)) return false;
+	if (!((double) left.read_start / left.read_length <= READ_THRESHOLD &&
+		(double) right.read_end / right.read_length > 1 - READ_THRESHOLD ||
+		(double) right.read_start / right.read_length <= READ_THRESHOLD &&
+		(double) left.read_end / left.read_length > 1 - READ_THRESHOLD)) return false;
 
 	return true;
 }
 
 void read_overlaps(string filePath) {
-
 	cout << "Reading overlaps..." << endl;
 
 	ifstream file(filePath);
 	string line;
 
 	while (getline(file, line)) {
-
 		istringstream ss(line);
 		overlap o;
 
@@ -160,7 +159,6 @@ void read_overlaps(string filePath) {
 }
 
 void read_contigs(string filePath) {
-
 	cout << "Reading contigs..." << endl;
 
 	ifstream file(filePath);
@@ -170,17 +168,19 @@ void read_contigs(string filePath) {
 	while (getline(file, name)) {
 		name.erase(0, 1);
 		getline(file, data);
+
 		Contig* c = new Contig(name, data);
 		Scaffold* s = new Scaffold(c);
+
 		contigs.emplace_back(c);
 		scaffolds.insert(s);
+
 		id_to_contig[name] = c;
 		id_to_scaffold[name] = s;
 	}
 }
 
 void rate_overlaps() {
-
 	cout << "Checking overlaps..." << endl;
 
 	int group_start = 0;
@@ -209,26 +209,22 @@ void rate_overlaps() {
 		group_start = i;
 	}
 
-	for (auto overlap : votes_end_start) {
+	for (auto overlap : votes_end_start)
 		joint_overlaps.emplace_back(joint_overlap(overlap.first.first, overlap.first.second, 0));
-	}
-	for (auto overlap : votes_end_end) {
+
+	for (auto overlap : votes_end_end)
 		joint_overlaps.emplace_back(joint_overlap(overlap.first.first, overlap.first.second, 1));
-	}
-	for (auto overlap : votes_start_start) {
+
+	for (auto overlap : votes_start_start)
 		joint_overlaps.emplace_back(joint_overlap(overlap.first.first, overlap.first.second, 2));
-	}
 
 	sort(joint_overlaps.begin(), joint_overlaps.end(), cmp);
 }
 
 void scaffold() {
-
 	cout << "Sorting contigs..." << endl;
 
 	for (auto o : joint_overlaps) {
-		if (scaffolds.size() == 1) break;
-
 		Contig* left_contig = id_to_contig[o.left];
 		Contig* right_contig = id_to_contig[o.right];
 
@@ -261,10 +257,16 @@ void scaffold() {
 		
 		left_scaffold->merge(right_scaffold);
 		scaffolds.erase(right_scaffold);
+
+		if (scaffolds.size() == 1) break;
 	}
 }
 
 int main(int argc, char **argv) {
+	if (argc != 4) {
+		cout << "ERROR: 3 arguments expected (<contigs> <overlaps> <output>)!" << endl;
+		return 0;
+	}
 
 	read_contigs(string(argv[1]));
 	read_overlaps(string(argv[2]));
