@@ -1,7 +1,8 @@
 ## Installation and usage
 
 Requirements:
-- [minimap][https://github.com/lh3/minimap]
+- g++ compiler
+- [Minimap](https://github.com/lh3/minimap "minimap")
 ```
 make
 ./minimap <contigs_file> <reads_file> > overlaps.mhap
